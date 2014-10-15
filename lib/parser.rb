@@ -28,11 +28,28 @@ module Fauxy
       type ||= token.type_for_opening_bookend
 
       if current_statement.nil?
-        self.current_statement = Statement.new(type, token)
+        if type == :list
+          bookends << :paren
+          self.current_statement = Statement.new(type)
+        else
+          self.current_statement = Statement.new(type, token)
+        end
       elsif current_statement.unary? && current_statement.size == 1
         wrap_current_statement(:method_call)
         return if token.type == :dot_accessor
         current_statement.add(Statement.new(type, token))
+      elsif current_statement.type == :list
+        if token.type == :closing_paren
+          if bookends.last == :paren
+            bookends.pop
+          else
+            # raise error!
+          end
+        elsif token.type == :comma
+          return
+        else
+          current_statement.add(Statement.new(type, token))
+        end
       else
         current_statement.add(Statement.new(type, token))
       end

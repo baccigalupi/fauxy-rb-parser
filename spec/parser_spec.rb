@@ -129,13 +129,13 @@ describe Fauxy::Parser do
         expect(statements.first.size).to be == 2
       end
 
-      xit "should build a method call statement" do
+      it "should build a method call statement" do
         expect(statements.first.type).to be == :method_call
       end
 
-      xit "should have the right tokens" do
-        expect(statements.first.first.type).to be == :number
-        expect(statements.first.last.type).to be == :id
+      it "should have the right tokens" do
+        expect(statements.first.first.type).to be == :literal
+        expect(statements.first.last.type).to be == :lookup
       end
     end
   end
@@ -149,13 +149,17 @@ describe Fauxy::Parser do
           Fauxy::Token.new(:comma),
           Fauxy::Token.new(:number, 7),
           Fauxy::Token.new(:comma),
-          Fauxy::Token.new(:closed_paren)
+          Fauxy::Token.new(:closing_paren)
         ]
       }
 
       it "should build one of the right type of statement" do
         expect(statements.size).to be == 1
         expect(statements.first.type).to be == :list
+      end
+
+      it "should not add statement/tokens for the commas, or parens" do
+        expect(statements.first.size).to be == 2
       end
     end
   end
