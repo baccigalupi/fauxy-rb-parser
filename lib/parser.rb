@@ -41,9 +41,21 @@ module Fauxy
     end
 
     def parse_method_call(statement)
-      statement = Statement.new(:method_call, statement)
+      token = tokens.current
+      return statement unless token
+      return statement if [:statement_end, :line_end].include?(token.type)
+
+      if token.type == :dot_accessor
+        tokens.next
+        return statement unless token
+      end
+
+      if statement.type != :method_call
+        statement = Statement.new(:method_call, statement)
+      end
       statement.add(parse_token)
-      statement
+      tokens.next
+      parse_method_call(statement)
     end
 
     def parse_token
