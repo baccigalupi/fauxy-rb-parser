@@ -15,6 +15,10 @@ module Fauxy
       [:id, :class_id].include?(type)
     end
 
+    def unary?
+      is_literal? || is_lookup?
+    end
+
     def unary_statement_type
       if is_literal?
         :literal

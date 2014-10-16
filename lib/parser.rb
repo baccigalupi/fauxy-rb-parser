@@ -11,33 +11,34 @@ module Fauxy
 
     def run
       while !tokens.complete?
-        statement = start_statement
+        statement = parse_statement(nil)
         statements << statement if statement
       end
 
       statements
     end
 
-    def start_statement
-      statement = parse_token
-      tokens.next
-      parse_statement(statement) if statement
-    end
-
-    # starting an unknown statement
     def parse_statement(statement)
       token = tokens.current
       return statement unless token
+      
+      if statement
+        if [:statement_end, :line_end].include?(token.type)
+          # just move along, end of statement
+        elsif statement.unary?
+          statement = parse_method_call(statement)
+        end
 
-
-      if [:statement_end, :line_end].include?(token.type)
-        # just move along, end of statement
-      elsif statement.unary?
-        statement = parse_method_call(statement)
+        tokens.next
+        statement
+      else
+        if token.unary?
+          statement = parse_token
+          tokens.next
+          parse_statement(statement)
+        else
+        end
       end
-
-      tokens.next
-      statement
     end
 
     def parse_method_call(statement)
@@ -50,11 +51,12 @@ module Fauxy
         return statement unless token
       end
 
-      if statement.type != :method_call
+      if statement.type != :method_call || statement.size >= 2
         statement = Statement.new(:method_call, statement)
       end
       statement.add(parse_token)
       tokens.next
+
       parse_method_call(statement)
     end
 

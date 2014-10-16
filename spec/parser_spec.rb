@@ -116,7 +116,7 @@ describe Fauxy::Parser do
       let(:tokens) {
         [
           Fauxy::Token.new(:number, 0),
-          Fauxy::Token.new(:dot_accessor, nil),
+          Fauxy::Token.new(:dot_accessor),
           Fauxy::Token.new(:id, "++")
         ]
       }
@@ -138,8 +138,108 @@ describe Fauxy::Parser do
         expect(statements.first.last.type).to be == :lookup
       end
     end
+
+    describe 'nested method calls' do
+      describe "with dots" do
+        let(:tokens) {
+          [
+            Fauxy::Token.new(:number, 0),
+            Fauxy::Token.new(:dot_accessor),
+            Fauxy::Token.new(:id, "to_s"),
+            Fauxy::Token.new(:dot_accessor),
+            Fauxy::Token.new(:id, "to_i")
+          ]
+        }
+
+        # <Statement: :method_call(
+        #   <Statement: :method_call(
+        #      <Statement: :literal( <Token: :number, 0> )>,
+        #      <Statement: :lookup( <Token: :id, "to_s">)>
+        #   )>,
+        #   <Statement: :lookup( <Token: :id, "to_i"> )>
+        # )>
+
+        let(:nested) { statements.first.first }
+
+        it "should build the right number of statements" do
+          expect(statements.size).to be == 1
+        end
+
+        it "should containe a nested method call" do
+          expect(statements.first.type).to be == :method_call
+
+          expect(nested.type).to be == :method_call
+          expect(nested.size).to be == 2
+        end
+
+        it "should put the tokens in the right place in the nested method call" do
+
+          nested_first_token = nested.first.first
+          expect(nested_first_token.type).to be == :number
+          expect(nested_first_token.value).to be == 0
+
+          nested_last_token = nested.last.first
+          expect(nested_last_token.type).to be == :id
+          expect(nested_last_token.value).to be == "to_s"
+        end
+
+        it "should put the right method name on to the back of the first method call" do
+          method_name = statements.first.last
+          expect(method_name.first.type).to be == :id
+          expect(method_name.first.value).to be == "to_i"
+        end
+      end
+
+      describe "with spaces" do
+        let(:tokens) {
+          [
+            Fauxy::Token.new(:number, 0),
+            Fauxy::Token.new(:id, "to_s"),
+            Fauxy::Token.new(:id, "to_i")
+          ]
+        }
+
+        # <Statement: :method_call(
+        #   <Statement: :method_call(
+        #      <Statement: :literal( <Token: :number, 0> )>,
+        #      <Statement: :lookup( <Token: :id, "to_s">)>
+        #   )>,
+        #   <Statement: :lookup( <Token: :id, "to_i"> )>
+        # )>
+
+        let(:nested) { statements.first.first }
+
+        it "should build the right number of statements" do
+          expect(statements.size).to be == 1
+        end
+
+        it "should containe a nested method call" do
+          expect(statements.first.type).to be == :method_call
+
+          expect(nested.type).to be == :method_call
+          expect(nested.size).to be == 2
+        end
+
+        it "should put the tokens in the right place in the nested method call" do
+
+          nested_first_token = nested.first.first
+          expect(nested_first_token.type).to be == :number
+          expect(nested_first_token.value).to be == 0
+
+          nested_last_token = nested.last.first
+          expect(nested_last_token.type).to be == :id
+          expect(nested_last_token.value).to be == "to_s"
+        end
+
+        it "should put the right method name on to the back of the first method call" do
+          method_name = statements.first.last
+          expect(method_name.first.type).to be == :id
+          expect(method_name.first.value).to be == "to_i"
+        end
+      end
+    end
   end
-  #
+
   # describe "lists" do
   #   describe "with unary statements" do
   #     let(:tokens) {
@@ -165,7 +265,7 @@ describe Fauxy::Parser do
   #     end
   #   end
   # end
-  #
+
   # describe 'grouped statement' do
   #   let(:tokens) {
   #     [
