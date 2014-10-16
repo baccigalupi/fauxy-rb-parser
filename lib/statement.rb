@@ -20,9 +20,9 @@ module Fauxy
       type == :lookup || type == :literal
     end
 
-    def print
+    def inspect
       "<Statement: #{type.inspect}( " + value.map do |v|
-        v.print
+        v.inspect
       end.join(", ") + " )>"
     end
   end

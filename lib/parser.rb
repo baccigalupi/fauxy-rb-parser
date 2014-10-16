@@ -4,67 +4,45 @@ module Fauxy
     attr_accessor :current_statement
 
     def initialize(tokens)
-      @tokens = tokens
+      @tokens = Tokens.new(tokens)
       @statements = []
       @bookends = []
     end
 
     def run
-      tokens.each do |token|
-        if token.type == :statement_end || token.type == :line_end
-          add_current_statement_to_stack
-        else
-          add_to_current_statement(token)
-        end
+      while !tokens.complete?
+        statements << start_statement
       end
-
-      add_current_statement_to_stack
 
       statements
     end
 
-    def add_to_current_statement(token)
-      type = token.unary_statement_type
-      type ||= token.type_for_opening_bookend
+    def start_statement
+      statement = parse_token
+      tokens.next
+      parse_statement(statement) if statement
+    end
 
-      if current_statement.nil?
-        if type == :list
-          bookends << :paren
-          self.current_statement = Statement.new(type)
-        else
-          self.current_statement = Statement.new(type, token)
-        end
-      elsif current_statement.unary? && current_statement.size == 1
-        wrap_current_statement(:method_call)
-        return if token.type == :dot_accessor
-        current_statement.add(Statement.new(type, token))
-      elsif current_statement.type == :list
-        if token.type == :closing_paren
-          if bookends.last == :paren
-            bookends.pop
-          else
-            # raise error!
-          end
-        elsif token.type == :comma
-          return
-        else
-          current_statement.add(Statement.new(type, token))
-        end
-      else
-        current_statement.add(Statement.new(type, token))
+    # starting an unknown statement
+    def parse_statement(statement)
+      token = tokens.current
+      return statement unless token
+
+      if [:statement_end, :line_end].include?(token.type)
+        tokens.next
+        return statement
       end
     end
 
-    def wrap_current_statement(type)
-      new_statement = Statement.new(type)
-      new_statement.add(current_statement)
-      self.current_statement = new_statement
-    end
+    def parse_token
+      token = tokens.current
+      return nil unless token
 
-    def add_current_statement_to_stack
-      return unless current_statement
-      statements << current_statement
-      self.current_statement = nil
+      if statement_type = token.unary_statement_type
+        Statement.new(statement_type, token)
+      elsif [:statement_end, :line_end].include?(token.type)
+        return nil
+      end
     end
   end
 end

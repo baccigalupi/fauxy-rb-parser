@@ -25,11 +25,11 @@ module Fauxy
 
     def type_for_opening_bookend
       if type == :open_paren
-        :list
+        :list # :list_or_group
       end
     end
 
-    def print
+    def inspect
       "<Token: #{type.inspect}, #{value.inspect}>"
     end
   end
