@@ -91,27 +91,27 @@ describe Fauxy::Parser do
   end
 
   describe "method calls" do
-    # describe "separated by a space" do
-    #   let(:tokens) { [Fauxy::Token.new(:number, 0), Fauxy::Token.new(:id, '++')] }
-    #
-    #   it "should build the right number of statements" do
-    #     expect(statements.size).to be == 1
-    #   end
-    #
-    #   it "should build a method call statement" do
-    #     expect(statements.first.type).to be == :method_call
-    #   end
-    #
-    #   it "statement should have the right number of substaments" do
-    #     expect(statements.first.size).to be == 2
-    #   end
-    #
-    #   it "should have the right tokens" do
-    #     expect(statements.first.first.type).to be == :literal
-    #     expect(statements.first.last.type).to be == :lookup
-    #   end
-    # end
-    #
+    describe "separated by a space" do
+      let(:tokens) { [Fauxy::Token.new(:number, 0), Fauxy::Token.new(:id, '++')] }
+
+      it "should build the right number of statements" do
+        expect(statements.size).to be == 1
+      end
+
+      it "should build a method call statement" do
+        expect(statements.first.type).to be == :method_call
+      end
+
+      it "statement should have the right number of substaments" do
+        expect(statements.first.size).to be == 2
+      end
+
+      it "should have the right tokens" do
+        expect(statements.first.first.type).to be == :literal
+        expect(statements.first.last.type).to be == :lookup
+      end
+    end
+
   #   describe "separated by attribute accessor" do
   #     let(:tokens) {
   #       [

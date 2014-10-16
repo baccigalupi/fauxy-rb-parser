@@ -11,7 +11,8 @@ module Fauxy
 
     def run
       while !tokens.complete?
-        statements << start_statement
+        statement = start_statement
+        statements << statement if statement
       end
 
       statements
@@ -28,10 +29,21 @@ module Fauxy
       token = tokens.current
       return statement unless token
 
+
       if [:statement_end, :line_end].include?(token.type)
-        tokens.next
-        return statement
+        # just move along, end of statement
+      elsif statement.unary?
+        statement = parse_method_call(statement)
       end
+
+      tokens.next
+      statement
+    end
+
+    def parse_method_call(statement)
+      statement = Statement.new(:method_call, statement)
+      statement.add(parse_token)
+      statement
     end
 
     def parse_token
@@ -40,8 +52,6 @@ module Fauxy
 
       if statement_type = token.unary_statement_type
         Statement.new(statement_type, token)
-      elsif [:statement_end, :line_end].include?(token.type)
-        return nil
       end
     end
   end
