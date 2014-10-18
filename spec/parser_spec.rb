@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Fauxy::Parser do
   let(:parser) { Fauxy::Parser.new(tokens) }
-  let(:statements) { parser.run }
+  let(:statements) { parser.run.value }
 
   def assert_statement_types(statement, *types)
     expect(

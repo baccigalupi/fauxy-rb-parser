@@ -5,23 +5,35 @@ module Fauxy
 
     def initialize(tokens)
       @tokens = Tokens.new(tokens)
-      @statements = []
+      @statements = Statement.new(:statements)
       @bookends = []
     end
 
-    def run
-      while !tokens.complete?
-        statement = parse_statement(nil)
-        statements << statement if statement
-      end
+    def token
+      tokens.current
+    end
 
+    # parse_statements, takes terminating character, in case of blocks or grouped statements
+    # parse_statements called by run loop, and is the while loop that keeps going until terminated condition
+    # parse_statements calls parse_statment for each line, with the terminator line_end or line_break
+    # within that parse_statement looks at first token and tries reads tokens until it determines a substatement parser
+    #
+
+    def run
+      parse_statements
       statements
     end
 
+    def parse_statements(terminators=[nil])
+      while !tokens.complete? || (token && terminators.include?(token.type))
+        statement = parse_statement(nil)
+        statements.add(statement) if statement
+      end
+    end
+
     def parse_statement(statement)
-      token = tokens.current
       return statement unless token
-      
+
       if statement
         if [:statement_end, :line_end].include?(token.type)
           # just move along, end of statement
@@ -42,7 +54,6 @@ module Fauxy
     end
 
     def parse_method_call(statement)
-      token = tokens.current
       return statement unless token
       return statement if [:statement_end, :line_end].include?(token.type)
 
