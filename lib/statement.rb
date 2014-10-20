@@ -16,6 +16,10 @@ module Fauxy
       value << val
     end
 
+    def pop
+      value.pop
+    end
+
     def unary?
       type == :lookup || type == :literal
     end

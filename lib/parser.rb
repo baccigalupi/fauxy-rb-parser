@@ -1,82 +1,103 @@
 module Fauxy
   class Parser
-    attr_reader :tokens, :statements, :bookends
-    attr_accessor :current_statement
+    attr_accessor :tokens, :statements
 
-    def initialize(tokens)
-      @tokens = Tokens.new(tokens)
-      @statements = Statement.new(:statements)
-      @bookends = []
+    def initialize(token_list)
+      @tokens = Tokens.new(token_list)
+      tokens.convert_unaries
     end
 
     def token
       tokens.current
     end
 
+    def run
+      self.statements = parse_statements
+    end
+
     # parse_statements, takes terminating character, in case of blocks or grouped statements
     # parse_statements called by run loop, and is the while loop that keeps going until terminated condition
     # parse_statements calls parse_statment for each line, with the terminator line_end or line_break
-    # within that parse_statement looks at first token and tries reads tokens until it determines a substatement parser
-    #
 
-    def run
-      parse_statements
+    def parse_statements(terminators=[nil])
+      statements = Statement.new(:statements)
+      while !tokens.complete?
+        statement = parse_statement
+        statements.add(statement) if statement
+      end
       statements
     end
 
-    def parse_statements(terminators=[nil])
-      while !tokens.complete? || (token && terminators.include?(token.type))
-        statement = parse_statement(nil)
-        statements.add(statement) if statement
-      end
+    def return_statement(statement)
+      tokens.next
+      statement
     end
 
-    def parse_statement(statement)
-      return statement unless token
+    def peek_type
+      tokens.peek.type
+    end
+
+    def token_type
+      token.type
+    end
+
+    def default_terminators
+      [:statement_end, :line_end, nil]
+    end
+
+    # within that parse_statement looks at first token and tries reads tokens until it determines a substatement parser
+    def parse_statement(terminators = default_terminators, statement=nil)
+      return unless token_type
 
       if statement
-        if [:statement_end, :line_end].include?(token.type)
-          # just move along, end of statement
-        elsif statement.unary?
-          statement = parse_method_call(statement)
-        end
-
-        tokens.next
-        statement
-      else
-        if token.unary?
-          statement = parse_token
+        return_statement(parse_method_call(terminators, statement))
+      elsif token_type == :lookup || token_type == :literal
+        if terminators.include?(peek_type) || peek_type == nil
+          statement = token
+          tokens.next # clear the terminator
           tokens.next
-          parse_statement(statement)
+          statement
+        elsif peek_type == :dot_accessor
+          return_statement(parse_method_call(terminators))
+        elsif peek_type == :local_assign
+          return_statement(parse_local_assign(terminators))
+        elsif token_type == :literal
+          return_statement(parse_method_call(terminators))
+        elsif peek_type == :attr_assign
+          return_statement(parse_attr_assign(terminators))
         else
+          return_statement(parse_method_call(terminators))
         end
+      # else token_type == :opening_paren
+      #   # grouped statement, if comma rollback and do list
+      #   # list
+      # else token_type == :block_declaration
+      #   # do that
       end
     end
 
-    def parse_method_call(statement)
-      return statement unless token
-      return statement if [:statement_end, :line_end].include?(token.type)
+    # current tests only cover two unary statements to this
+    def parse_method_call(terminators, statement = token)
+      return unless token_type
 
-      if token.type == :dot_accessor
+      # deal with the receiver
+      method_call = Statement.new(:method_call)
+      method_call.add(statement)
+
+      tokens.next if statement == token
+      tokens.next if token_type == :dot_accessor
+
+      # add the method name
+      method_call.add(token)
+
+      # add optional list
+      # add optional block
+
+      if terminators.include?(peek_type)
+        return_statement(method_call)
+      else
         tokens.next
-        return statement unless token
-      end
-
-      if statement.type != :method_call || statement.size >= 2
-        statement = Statement.new(:method_call, statement)
-      end
-      statement.add(parse_token)
-      tokens.next
-
-      parse_method_call(statement)
-    end
-
-    def parse_token
-      token = tokens.current
-      return nil unless token
-
-      if statement_type = token.unary_statement_type
-        Statement.new(statement_type, token)
+        return_statement(parse_statement(terminators, method_call))
       end
     end
   end

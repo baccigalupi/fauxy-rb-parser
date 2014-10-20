@@ -7,8 +7,27 @@ module Fauxy
       @cursor = 0
     end
 
+    def convert_unaries
+      @values = values.map do |token|
+        if token.unary?
+          Statement.new(token.unary_statement_type, token)
+        else
+          token
+        end
+      end
+      self
+    end
+
+    def prev
+      values[cursor - 1] || Null.new
+    end
+
     def current
-      values[cursor]
+      values[cursor] || Null.new
+    end
+
+    def peek
+      values[cursor + 1] || Null.new
     end
 
     def next
@@ -18,6 +37,11 @@ module Fauxy
 
     def complete?
       cursor >= values.length
+    end
+
+    class Null
+      def type
+      end
     end
   end
 end
