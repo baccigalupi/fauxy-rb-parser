@@ -48,13 +48,17 @@ module Fauxy
     # within that parse_statement looks at first token and tries reads tokens until it determines a substatement parser
     def parse_statement(terminators = default_terminators, statement=nil)
       return unless token_type
+      return nil if token_type == nil
+
+      if default_terminators.include?(token_type)
+        tokens.next
+      end
 
       if statement
         return_statement(parse_method_call(terminators, statement))
       elsif token_type == :lookup || token_type == :literal
         if terminators.include?(peek_type) || peek_type == nil
           statement = token
-          tokens.next # clear the terminator
           tokens.next
           statement
         elsif peek_type == :dot_accessor
@@ -68,9 +72,10 @@ module Fauxy
         else
           return_statement(parse_method_call(terminators))
         end
-      # else token_type == :opening_paren
-      #   # grouped statement, if comma rollback and do list
-      #   # list
+      else token_type == :opening_paren
+        return_statement(
+          parse_list(terminators) || parse_group(terminators)
+        )
       # else token_type == :block_declaration
       #   # do that
       end
@@ -99,6 +104,28 @@ module Fauxy
         tokens.next
         return_statement(parse_statement(terminators, method_call))
       end
+    end
+
+    def parse_list(terminators)
+      return unless token_type
+
+      list = Statement.new(:list)
+      tokens.next # to pass the opening paren
+
+      has_comma = false
+      while token_type != :closing_paren && token_type != nil
+        if token_type == :comma
+          has_comma = true
+          tokens.next
+        else
+          list.add(parse_statement([:comma, :closing_parent]))
+        end
+      end
+
+      return_statement(list) if has_comma
+    end
+
+    def parse_group(terminators)
     end
   end
 end

@@ -240,31 +240,31 @@ describe Fauxy::Parser do
     end
   end
 
-  # describe "lists" do
-  #   describe "with unary statements" do
-  #     let(:tokens) {
-  #       [
-  #         Fauxy::Token.new(:open_paren),
-  #         Fauxy::Token.new(:number, 0),
-  #         Fauxy::Token.new(:comma),
-  #         Fauxy::Token.new(:number, 7),
-  #         Fauxy::Token.new(:comma),
-  #         Fauxy::Token.new(:closing_paren)
-  #       ]
-  #     }
-  #
-  #     it "should build one list statement" do
-  #       expect(statements.size).to be == 1
-  #       expect(statements.first.type).to be == :list
-  #     end
-  #
-  #     it "should not add statement/tokens for the commas, or parens" do
-  #       expect(statements.first.size).to be == 2
-  #       expect(statements.first.first.type).to be == :literal
-  #       expect(statements.first.last.type).to be == :literal
-  #     end
-  #   end
-  # end
+  describe "lists" do
+    describe "with unary statements" do
+      let(:tokens) {
+        [
+          Fauxy::Token.new(:open_paren),
+          Fauxy::Token.new(:number, 0),
+          Fauxy::Token.new(:comma),
+          Fauxy::Token.new(:number, 7),
+          Fauxy::Token.new(:comma),
+          Fauxy::Token.new(:closing_paren)
+        ]
+      }
+
+      it "should build one list statement" do
+        expect(statements.size).to be == 1
+        expect(statements.first.type).to be == :list
+      end
+
+      it "should not add statement/tokens for the commas, or parens" do
+        expect(statements.first.size).to be == 2
+        expect(statements.first.first.type).to be == :literal
+        expect(statements.first.last.type).to be == :literal
+      end
+    end
+  end
 
   # describe 'grouped statement' do
   #   let(:tokens) {
