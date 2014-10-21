@@ -99,6 +99,7 @@ module Fauxy
         tokens.next
         list = parse_statement(terminators)
         # convert to list as some point
+        list.type = :list if list.type == :group
         method_call.add(list)
       end
 

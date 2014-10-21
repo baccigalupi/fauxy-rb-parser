@@ -406,7 +406,7 @@ describe Fauxy::Parser do
     end
 
     describe "method call with arguments and no dot accessor" do
-      # MyClass.new(arg1, arg2)
+      # MyClass new(arg1, arg2)
       let(:tokens) {
         [
           Fauxy::Token.new(:class_id, "MyClass"),
@@ -439,6 +439,48 @@ describe Fauxy::Parser do
         list = statements.first.last
         expect(list.first.first.value).to be == "arg1"
         expect(list.last.first.value).to be == "arg2"
+      end
+    end
+
+    describe "method call on list with only one argument" do
+      # ('1','2','3').join(", ")
+      let(:tokens) {
+        [
+          Fauxy::Token.new(:opening_paren),
+          Fauxy::Token.new(:string, "1"),
+          Fauxy::Token.new(:comma),
+          Fauxy::Token.new(:string, "2"),
+          Fauxy::Token.new(:comma),
+          Fauxy::Token.new(:string, "3"),
+          Fauxy::Token.new(:closing_paren),
+          Fauxy::Token.new(:id, "join"),
+          Fauxy::Token.new(:opening_paren),
+          Fauxy::Token.new(:string, ", "),
+          Fauxy::Token.new(:closing_paren)
+        ]
+      }
+
+      it "should build a method_call statement" do
+        expect(statements.size).to be == 1
+        expect(statements.first.type).to be == :method_call
+      end
+
+      it "should build out a list as the first element" do
+        list = statements.first.first
+        expect(list.type).to be == :list
+        expect(list.size).to be == 3
+      end
+
+      it "second element should be the method name" do
+        method_name = statements.first[1]
+        expect(method_name.type).to be == :lookup
+        expect(method_name.first.value).to be == "join"
+      end
+
+      it "last element is a list" do
+        arguments = statements.first.last
+        expect(arguments.type).to be == :list
+        expect(arguments.size).to be == 1
       end
     end
   end
