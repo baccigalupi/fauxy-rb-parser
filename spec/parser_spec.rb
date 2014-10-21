@@ -301,19 +301,19 @@ describe Fauxy::Parser do
     end
   end
 
-  # describe 'grouped statement' do
-  #   let(:tokens) {
-  #     [
-  #       Fauxy::Token.new(:open_paren),
-  #       Fauxy::Token.new(:number, 0),
-  #       Fauxy::Token.new(:id, '++'),
-  #       Fauxy::Token.new(:closing_paren)
-  #     ]
-  #   }
-  #
-  #   it "should build one grouped statement" do
-  #     expect(statements.size).to be == 1
-  #     expect(statements.first.type).to be == :grouped
-  #   end
-  # end
+  describe 'grouped statement' do
+    let(:tokens) {
+      [
+        Fauxy::Token.new(:open_paren),
+        Fauxy::Token.new(:number, 0),
+        Fauxy::Token.new(:id, '++'),
+        Fauxy::Token.new(:closing_paren)
+      ]
+    }
+
+    it "should build one grouped statement" do
+      expect(statements.size).to be == 1
+      expect(statements.first.type).to be == :group
+    end
+  end
 end
