@@ -112,17 +112,16 @@ module Fauxy
       list = Statement.new(:list)
       tokens.next # to pass the opening paren
 
-      has_comma = false
       while token_type != :closing_paren && token_type != nil
         if token_type == :comma
-          has_comma = true
           tokens.next
         else
-          list.add(parse_statement([:comma, :closing_parent]))
+          statement = parse_statement([:comma, :closing_paren])
+          list.add(statement)
         end
       end
 
-      return_statement(list) if has_comma
+      return_statement(list)
     end
 
     def parse_group(terminators)

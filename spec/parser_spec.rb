@@ -264,6 +264,41 @@ describe Fauxy::Parser do
         expect(statements.first.last.type).to be == :literal
       end
     end
+
+    describe "with nested statements" do
+      # "(0.to_s, (42, 13))"
+      let(:tokens) {
+        [
+          Fauxy::Token.new(:open_paren),
+          Fauxy::Token.new(:number, 0),
+          Fauxy::Token.new(:dot_accessor),
+          Fauxy::Token.new(:id, "to_s"),
+          Fauxy::Token.new(:comma),
+          Fauxy::Token.new(:open_paren),
+          Fauxy::Token.new(:number, 42),
+          Fauxy::Token.new(:comma),
+          Fauxy::Token.new(:number, 13),
+          Fauxy::Token.new(:closing_paren),
+          Fauxy::Token.new(:closing_paren)
+        ]
+      }
+
+      let(:method_call) { statements.first.first }
+      let(:nested_list) { statements.first.last }
+
+      it "should build one list statement" do
+        expect(statements.size).to be == 1
+        expect(statements.first.type).to be == :list
+      end
+
+      it "should build a method call within that" do
+        expect(method_call.type).to be == :method_call
+      end
+
+      it "should build a nested list within that" do
+        expect(nested_list.type).to be == :list
+      end
+    end
   end
 
   # describe 'grouped statement' do
