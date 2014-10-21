@@ -317,7 +317,7 @@ describe Fauxy::Parser do
     end
   end
 
-  describe 'parsing methods with complicated parens' do
+  describe 'methods with complicated parens' do
     describe "grouped statement receiving a method call" do
       # (0 ++).to_s
       let(:tokens) {
@@ -482,6 +482,31 @@ describe Fauxy::Parser do
         expect(arguments.type).to be == :list
         expect(arguments.size).to be == 1
       end
+    end
+  end
+
+  describe 'blocks' do
+    let(:tokens) {
+      [
+        Fauxy::Token.new(:block_declaration),
+        Fauxy::Token.new(:block_start),
+        Fauxy::Token.new(:string, "hello"),
+        Fauxy::Token.new(:block_end)
+      ]
+    }
+
+    it "creates a block statement" do
+      expect(statements.size).to be == 1
+      expect(statements.first.type).to be == :block
+    end
+
+    it "adds a statements statement" do
+      expect(statements.first.first.type).to be == :statements
+    end
+
+    it "statements include the right statement" do
+      expect(statements.first.first.size).to be == 1
+      expect(statements.first.first.first.type).to be == :literal
     end
   end
 end

@@ -15,19 +15,6 @@ module Fauxy
       self.statements = parse_statements
     end
 
-    # parse_statements, takes terminating character, in case of blocks or grouped statements
-    # parse_statements called by run loop, and is the while loop that keeps going until terminated condition
-    # parse_statements calls parse_statment for each line, with the terminator line_end or line_break
-
-    def parse_statements(terminators=[nil])
-      statements = Statement.new(:statements)
-      while !tokens.complete?
-        statement = parse_statement
-        statements.add(statement) if statement
-      end
-      statements
-    end
-
     def return_statement(statement)
       tokens.next
       statement
@@ -43,6 +30,15 @@ module Fauxy
 
     def default_terminators
       [:statement_end, :line_end, nil]
+    end
+
+    def parse_statements(terminators=[nil])
+      statements = Statement.new(:statements)
+      while !terminators.include?(token_type)
+        statement = parse_statement(terminators == [nil] ? default_terminators : terminators)
+        statements.add(statement) if statement
+      end
+      statements
     end
 
     # within that parse_statement looks at first token and tries reads tokens until it determines a substatement parser
@@ -72,10 +68,12 @@ module Fauxy
         else
           parse_method_call(terminators)
         end
-      else token_type == :opening_paren
+      elsif token_type == :opening_paren
         parse_group_or_list(terminators)
-      # else token_type == :block_declaration
-      #   # do that
+      elsif token_type == :block_declaration
+        parse_block(terminators)
+      else
+        raise ArgumentError, "Unknown token type #{token.inspect}"
       end
     end
 
@@ -143,6 +141,27 @@ module Fauxy
         tokens.next
         return_statement(parse_statement(terminators, list_or_group))
       end
+    end
+
+    def parse_block(terminators)
+      return unless token_type
+      tokens.next
+
+      block = Statement.new(:block)
+
+      if token_type == :open_paren
+        list = parse_list(terminators)
+        block.add(list)
+      end
+
+      if token_type == :block_start
+        tokens.next
+        statements = parse_statements([:block_end, nil])
+        tokens.next
+        block.add(statements)
+      end
+
+      block
     end
   end
 end
