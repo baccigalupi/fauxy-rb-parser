@@ -244,7 +244,7 @@ describe Fauxy::Parser do
     describe "with unary statements" do
       let(:tokens) {
         [
-          Fauxy::Token.new(:open_paren),
+          Fauxy::Token.new(:opening_paren),
           Fauxy::Token.new(:number, 0),
           Fauxy::Token.new(:comma),
           Fauxy::Token.new(:number, 7),
@@ -269,12 +269,12 @@ describe Fauxy::Parser do
       # "(0.to_s, (42, 13))"
       let(:tokens) {
         [
-          Fauxy::Token.new(:open_paren),
+          Fauxy::Token.new(:opening_paren),
           Fauxy::Token.new(:number, 0),
           Fauxy::Token.new(:dot_accessor),
           Fauxy::Token.new(:id, "to_s"),
           Fauxy::Token.new(:comma),
-          Fauxy::Token.new(:open_paren),
+          Fauxy::Token.new(:opening_paren),
           Fauxy::Token.new(:number, 42),
           Fauxy::Token.new(:comma),
           Fauxy::Token.new(:number, 13),
@@ -304,7 +304,7 @@ describe Fauxy::Parser do
   describe 'grouped statement' do
     let(:tokens) {
       [
-        Fauxy::Token.new(:open_paren),
+        Fauxy::Token.new(:opening_paren),
         Fauxy::Token.new(:number, 0),
         Fauxy::Token.new(:id, '++'),
         Fauxy::Token.new(:closing_paren)
@@ -319,9 +319,10 @@ describe Fauxy::Parser do
 
   describe 'parsing methods with complicated parens' do
     describe "grouped statement receiving a method call" do
+      # (0 ++).to_s
       let(:tokens) {
         [
-          Fauxy::Token.new(:open_paren),
+          Fauxy::Token.new(:opening_paren),
           Fauxy::Token.new(:number, 0),
           Fauxy::Token.new(:id, '++'),
           Fauxy::Token.new(:closing_paren),
@@ -363,6 +364,81 @@ describe Fauxy::Parser do
         expect(lookup.type).to be == :lookup
         expect(lookup.first.type).to be == :id
         expect(lookup.first.value).to be == "to_s"
+      end
+    end
+
+    describe "method call with arguments" do
+      # MyClass.new(arg1, arg2)
+      let(:tokens) {
+        [
+          Fauxy::Token.new(:class_id, "MyClass"),
+          Fauxy::Token.new(:dot_accessor),
+          Fauxy::Token.new(:id, "new"),
+          Fauxy::Token.new(:opening_paren),
+          Fauxy::Token.new(:id, "arg1"),
+          Fauxy::Token.new(:comma),
+          Fauxy::Token.new(:id, "arg2"),
+          Fauxy::Token.new(:closing_paren),
+        ]
+      }
+
+      <<-STATEMENT
+        <Statement: :method_call(
+          <Statement: :lookup( <Token: :class_id, "MyClass"> )>,
+          <Statement: :lookup( <Token: :id, "new"> )>,
+          <Statement: :list(
+            <Statement: :lookup( <Token: :id, "arg1"> )>,
+            <Statement: :lookup( <Token: :id, "arg2"> )>
+          )>
+        )>
+      STATEMENT
+
+      it "should build a method_call statement" do
+        expect(statements.size).to be == 1
+        expect(statements.first.type).to be == :method_call
+      end
+
+      it "should include a list as the third element" do
+        list = statements.first.last
+        expect(list.first.first.value).to be == "arg1"
+        expect(list.last.first.value).to be == "arg2"
+      end
+    end
+
+    describe "method call with arguments and no dot accessor" do
+      # MyClass.new(arg1, arg2)
+      let(:tokens) {
+        [
+          Fauxy::Token.new(:class_id, "MyClass"),
+          Fauxy::Token.new(:id, "new"),
+          Fauxy::Token.new(:opening_paren),
+          Fauxy::Token.new(:id, "arg1"),
+          Fauxy::Token.new(:comma),
+          Fauxy::Token.new(:id, "arg2"),
+          Fauxy::Token.new(:closing_paren),
+        ]
+      }
+
+      <<-STATEMENT
+        <Statement: :method_call(
+          <Statement: :lookup( <Token: :class_id, "MyClass"> )>,
+          <Statement: :lookup( <Token: :id, "new"> )>,
+          <Statement: :list(
+            <Statement: :lookup( <Token: :id, "arg1"> )>,
+            <Statement: :lookup( <Token: :id, "arg2"> )>
+          )>
+        )>
+      STATEMENT
+
+      it "should build a method_call statement" do
+        expect(statements.size).to be == 1
+        expect(statements.first.type).to be == :method_call
+      end
+
+      it "should include a list as the third element" do
+        list = statements.first.last
+        expect(list.first.first.value).to be == "arg1"
+        expect(list.last.first.value).to be == "arg2"
       end
     end
   end

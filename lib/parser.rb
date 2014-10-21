@@ -94,7 +94,14 @@ module Fauxy
       # add the method name
       method_call.add(token)
 
-      # add optional list
+      # optional list
+      if peek_type == :opening_paren
+        tokens.next
+        list = parse_statement(terminators)
+        # convert to list as some point
+        method_call.add(list)
+      end
+
       # add optional block
 
       if terminators.include?(peek_type)
@@ -123,6 +130,9 @@ module Fauxy
           list_or_group.add(statement)
         end
       end
+
+      # does not cover lists with only one value, like in arguments
+      # or even, empty lists
 
       if terminators.include?(peek_type)
         # we are done
