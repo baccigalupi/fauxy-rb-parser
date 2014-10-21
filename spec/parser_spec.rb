@@ -316,4 +316,54 @@ describe Fauxy::Parser do
       expect(statements.first.type).to be == :group
     end
   end
+
+  describe 'parsing methods with complicated parens' do
+    describe "grouped statement receiving a method call" do
+      let(:tokens) {
+        [
+          Fauxy::Token.new(:open_paren),
+          Fauxy::Token.new(:number, 0),
+          Fauxy::Token.new(:id, '++'),
+          Fauxy::Token.new(:closing_paren),
+          Fauxy::Token.new(:dot_accessor),
+          Fauxy::Token.new(:id, "to_s"),
+        ]
+      }
+
+      <<-STATEMENT
+        <Statement: :method_call(
+          <Statement: :group(
+            <Statement: :method_call(
+              <Statement: :literal( <Token: :number, 0> )>,
+              <Statement: :lookup( <Token: :id, "++"> )>
+            )>
+          )>,
+          <Statement: :lookup( <Token: :id, "to_s"> )>
+        )>
+      STATEMENT
+
+      let(:statement) { statements.first }
+
+      it "should build a method call as the base statement" do
+        expect(statements.size).to be == 1
+        expect(statement.type).to be == :method_call
+      end
+
+      it "should have a grouped statement as the first element" do
+        group = statement.first
+        expect(group.type).to be == :group
+        method_call = group.first
+        expect(method_call.type).to be == :method_call
+        expect(method_call.first.type).to be == :literal
+        expect(method_call.last.first.value).to be == '++'
+      end
+
+      it "should have a method call at the end" do
+        lookup = statement.last
+        expect(lookup.type).to be == :lookup
+        expect(lookup.first.type).to be == :id
+        expect(lookup.first.value).to be == "to_s"
+      end
+    end
+  end
 end

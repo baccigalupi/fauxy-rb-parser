@@ -13,12 +13,11 @@ Literal
 List
   "(" statement? (, statement)* ")"
 
-Block
-  "->" list? "{" ("\n"|"\r")? statements? "}"
-
 Grouped statement
   "(" statement ")"
 
+Block
+  "->" list? "{" ("\n"|"\r")? statements? "}"
 
 Attribute Assign
   statement ":" statement

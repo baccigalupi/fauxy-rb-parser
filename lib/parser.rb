@@ -80,8 +80,9 @@ module Fauxy
     end
 
     # current tests only cover two unary statements to this
-    def parse_method_call(terminators, statement = token)
+    def parse_method_call(terminators, statement = nil)
       return unless token_type
+      statement ||= token
 
       # deal with the receiver
       method_call = Statement.new(:method_call)
@@ -107,23 +108,30 @@ module Fauxy
     def parse_group_or_list(terminators)
       return unless token_type
 
-      list = Statement.new(:group)
+      list_or_group = Statement.new(:group)
       tokens.next # to pass the opening paren
 
       while token_type != :closing_paren && token_type != nil
         if token_type == :comma
-          list.type = :list
+          list_or_group.type = :list
           tokens.next
         else
           statement = parse_statement([:comma, :closing_paren])
           if token_type == :comma
-            list.type == :list
+            list_or_group.type == :list
           end
-          list.add(statement)
+          list_or_group.add(statement)
         end
       end
 
-      return_statement(list)
+      if terminators.include?(peek_type)
+        # we are done
+        return_statement(list_or_group)
+      else
+        # it is the first part of another statement
+        tokens.next
+        return_statement(parse_statement(terminators, list_or_group))
+      end
     end
   end
 end
