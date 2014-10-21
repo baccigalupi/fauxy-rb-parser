@@ -57,25 +57,23 @@ module Fauxy
       if statement
         return_statement(parse_method_call(terminators, statement))
       elsif token_type == :lookup || token_type == :literal
-        if terminators.include?(peek_type) || peek_type == nil
+        if terminators.include?(peek_type)
           statement = token
           tokens.next
           statement
         elsif peek_type == :dot_accessor
-          return_statement(parse_method_call(terminators))
+          parse_method_call(terminators)
         elsif peek_type == :local_assign
-          return_statement(parse_local_assign(terminators))
+          parse_local_assign(terminators)
         elsif token_type == :literal
-          return_statement(parse_method_call(terminators))
+          parse_method_call(terminators)
         elsif peek_type == :attr_assign
-          return_statement(parse_attr_assign(terminators))
+          parse_attr_assign(terminators)
         else
-          return_statement(parse_method_call(terminators))
+          parse_method_call(terminators)
         end
       else token_type == :opening_paren
-        return_statement(
-          parse_list(terminators) || parse_group(terminators)
-        )
+        parse_group_or_list(terminators)
       # else token_type == :block_declaration
       #   # do that
       end
@@ -106,25 +104,26 @@ module Fauxy
       end
     end
 
-    def parse_list(terminators)
+    def parse_group_or_list(terminators)
       return unless token_type
 
-      list = Statement.new(:list)
+      list = Statement.new(:group)
       tokens.next # to pass the opening paren
 
       while token_type != :closing_paren && token_type != nil
         if token_type == :comma
+          list.type = :list
           tokens.next
         else
           statement = parse_statement([:comma, :closing_paren])
+          if token_type == :comma
+            list.type == :list
+          end
           list.add(statement)
         end
       end
 
       return_statement(list)
-    end
-
-    def parse_group(terminators)
     end
   end
 end
