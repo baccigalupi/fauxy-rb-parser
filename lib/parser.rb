@@ -35,7 +35,7 @@ module Fauxy
     def parse_statements(terminators=[nil])
       statements = Statement.new(:statements)
       while !terminators.include?(token_type)
-        statement = parse_statement(terminators == [nil] ? default_terminators : terminators)
+        statement = parse_statement(terminators == [nil] ? default_terminators : default_terminators + terminators)
         statements.add(statement) if statement
       end
       statements

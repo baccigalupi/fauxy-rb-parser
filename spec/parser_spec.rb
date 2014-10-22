@@ -486,7 +486,7 @@ describe Fauxy::Parser do
   end
 
   describe 'blocks' do
-    describe 'without arguments' do
+    describe 'without arguments, one statement' do
       # -> { "hello" }
       let(:tokens) {
         [
@@ -522,6 +522,93 @@ describe Fauxy::Parser do
       it "statements include the right statement" do
         expect(statements.first.last.size).to be == 1
         expect(statements.first.last.first.type).to be == :literal
+      end
+    end
+
+    describe 'without arguments, statements separated by ;' do
+      # -> { "hello"; "world" }
+      let(:tokens) {
+        [
+          Fauxy::Token.new(:block_declaration),
+          Fauxy::Token.new(:block_start),
+          Fauxy::Token.new(:string, "hello"),
+          Fauxy::Token.new(:statement_end),
+          Fauxy::Token.new(:string, "world"),
+          Fauxy::Token.new(:block_end)
+        ]
+      }
+
+      <<-STATEMENT
+        <Statement: :block(
+          <Statement: :list(  )>,
+          <Statement: :statements(
+            <Statement: :literal( <Token: :string, "hello"> )>,
+            <Statement: :literal( <Token: :string, "world"> )>
+          )>
+        )>
+      STATEMENT
+
+      it "creates a block statement" do
+        expect(statements.size).to be == 1
+        expect(statements.first.type).to be == :block
+      end
+
+      it "creates an empty arguments list" do
+        expect(statements.first.first.type).to be == :list
+      end
+
+      it "adds a statements statement" do
+        expect(statements.first.last.type).to be == :statements
+      end
+
+      it "statements include the right statement" do
+        expect(statements.first.last.size).to be == 2
+        expect(statements.first.last.first.type).to be == :literal
+        expect(statements.first.last.last.type).to be == :literal
+      end
+    end
+
+    describe 'without arguments, statements separated by ;' do
+      # -> {\n"hello"\n"world" }
+      let(:tokens) {
+        [
+          Fauxy::Token.new(:block_declaration),
+          Fauxy::Token.new(:block_start),
+          Fauxy::Token.new(:line_end),
+          Fauxy::Token.new(:string, "hello"),
+          Fauxy::Token.new(:line_end),
+          Fauxy::Token.new(:string, "world"),
+          Fauxy::Token.new(:block_end)
+        ]
+      }
+
+      <<-STATEMENT
+        <Statement: :block(
+          <Statement: :list(  )>,
+          <Statement: :statements(
+            <Statement: :literal( <Token: :string, "hello"> )>,
+            <Statement: :literal( <Token: :string, "world"> )>
+          )>
+        )>
+      STATEMENT
+
+      it "creates a block statement" do
+        expect(statements.size).to be == 1
+        expect(statements.first.type).to be == :block
+      end
+
+      it "creates an empty arguments list" do
+        expect(statements.first.first.type).to be == :list
+      end
+
+      it "adds a statements statement" do
+        expect(statements.first.last.type).to be == :statements
+      end
+
+      it "statements include the right statement" do
+        expect(statements.first.last.size).to be == 2
+        expect(statements.first.last.first.type).to be == :literal
+        expect(statements.first.last.last.type).to be == :literal
       end
     end
 
