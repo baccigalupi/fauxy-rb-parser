@@ -122,6 +122,7 @@ module Fauxy
           list_or_group.type = :list
           tokens.next
         else
+          # keep going
           statement = parse_statement([:comma, :closing_paren])
           if token_type == :comma
             list_or_group.type == :list
@@ -149,10 +150,12 @@ module Fauxy
 
       block = Statement.new(:block)
 
-      if token_type == :open_paren
-        list = parse_list(terminators)
-        block.add(list)
+      list = if token_type == :opening_paren
+        parse_group_or_list(terminators << :block_start)
+      else
+        Statement.new(:list)
       end
+      block.add(list)
 
       if token_type == :block_start
         tokens.next
