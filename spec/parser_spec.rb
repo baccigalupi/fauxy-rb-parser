@@ -103,12 +103,17 @@ describe Fauxy::Parser do
       end
 
       it "statement should have the right number of substaments" do
-        expect(statements.first.size).to be == 2
+        expect(statements.first.size).to be == 3
       end
 
       it "should have the right tokens" do
-        expect(statements.first.first.type).to be == :literal
-        expect(statements.first.last.type).to be == :lookup
+        expect(statements.first[0].type).to be == :literal
+        expect(statements.first[1].type).to be == :lookup
+      end
+
+      it "should include an empty arguments list" do
+        expect(statements.first.last.type).to be == :list
+        expect(statements.first.last.size).to be == 0
       end
     end
 
@@ -126,7 +131,7 @@ describe Fauxy::Parser do
       end
 
       it "statement should have the right number of substaments" do
-        expect(statements.first.size).to be == 2
+        expect(statements.first.size).to be == 3
       end
 
       it "should build a method call statement" do
@@ -134,8 +139,13 @@ describe Fauxy::Parser do
       end
 
       it "should have the right tokens" do
-        expect(statements.first.first.type).to be == :literal
-        expect(statements.first.last.type).to be == :lookup
+        expect(statements.first[0].type).to be == :literal
+        expect(statements.first[1].type).to be == :lookup
+      end
+
+      it "builds an empty arguments list" do
+        expect(statements.first.last.type).to be == :list
+        expect(statements.first.last.size).to be == 0
       end
     end
 
@@ -169,22 +179,21 @@ describe Fauxy::Parser do
           expect(statements.first.type).to be == :method_call
 
           expect(nested.type).to be == :method_call
-          expect(nested.size).to be == 2
+          expect(nested.size).to be == 3
         end
 
         it "should put the tokens in the right place in the nested method call" do
-
           nested_first_token = nested.first.first
           expect(nested_first_token.type).to be == :number
           expect(nested_first_token.value).to be == 0
 
-          nested_last_token = nested.last.first
+          nested_last_token = nested[1].first
           expect(nested_last_token.type).to be == :id
           expect(nested_last_token.value).to be == "to_s"
         end
 
         it "should put the right method name on to the back of the first method call" do
-          method_name = statements.first.last
+          method_name = statements.first[1]
           expect(method_name.first.type).to be == :id
           expect(method_name.first.value).to be == "to_i"
         end
@@ -217,22 +226,21 @@ describe Fauxy::Parser do
           expect(statements.first.type).to be == :method_call
 
           expect(nested.type).to be == :method_call
-          expect(nested.size).to be == 2
+          expect(nested.size).to be == 3
         end
 
         it "should put the tokens in the right place in the nested method call" do
-
           nested_first_token = nested.first.first
           expect(nested_first_token.type).to be == :number
           expect(nested_first_token.value).to be == 0
 
-          nested_last_token = nested.last.first
+          nested_last_token = nested[1].first
           expect(nested_last_token.type).to be == :id
           expect(nested_last_token.value).to be == "to_s"
         end
 
         it "should put the right method name on to the back of the first method call" do
-          method_name = statements.first.last
+          method_name = statements.first[1]
           expect(method_name.first.type).to be == :id
           expect(method_name.first.value).to be == "to_i"
         end
@@ -356,11 +364,11 @@ describe Fauxy::Parser do
         method_call = group.first
         expect(method_call.type).to be == :method_call
         expect(method_call.first.type).to be == :literal
-        expect(method_call.last.first.value).to be == '++'
+        expect(method_call[1].first.value).to be == '++'
       end
 
       it "should have a method call at the end" do
-        lookup = statement.last
+        lookup = statement[1]
         expect(lookup.type).to be == :lookup
         expect(lookup.first.type).to be == :id
         expect(lookup.first.value).to be == "to_s"

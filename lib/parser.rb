@@ -99,6 +99,8 @@ module Fauxy
         # convert to list as some point
         list.type = :list if list.type == :group
         method_call.add(list)
+      else
+        method_call.add(Statement.new(:list))
       end
 
       # add optional block
