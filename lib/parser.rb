@@ -92,7 +92,7 @@ module Fauxy
       # add the method name
       method_call.add(token)
 
-      # optional list
+      # list
       if peek_type == :opening_paren
         tokens.next
         list = parse_statement(terminators)
@@ -103,7 +103,11 @@ module Fauxy
         method_call.add(Statement.new(:list))
       end
 
-      # add optional block
+      if peek_type == :block_declaration
+        tokens.next
+        block = parse_block(terminators)
+        method_call.last.add(block) # add to list
+      end
 
       if terminators.include?(peek_type)
         return_statement(method_call)
