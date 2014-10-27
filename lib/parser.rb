@@ -95,16 +95,14 @@ module Fauxy
       # list
       if peek_type == :opening_paren
         tokens.next
-        list = parse_statement(terminators)
-        # convert to list as some point
-        list.type = :list if list.type == :group
-        method_call.add(list)
+        method_call.add(parse_list(terminators << :block_declaration))
       else
         method_call.add(Statement.new(:list))
       end
 
-      if peek_type == :block_declaration
-        tokens.next
+
+      if peek_type == :block_declaration || token_type == :block_declaration
+        tokens.next if peek_type == :block_declaration
         block = parse_block(terminators)
         method_call.last.add(block) # add to list
       end
@@ -137,9 +135,6 @@ module Fauxy
         end
       end
 
-      # does not cover lists with only one value, like in arguments
-      # or even, empty lists
-
       if terminators.include?(peek_type)
         # we are done
         return_statement(list_or_group)
@@ -150,6 +145,13 @@ module Fauxy
       end
     end
 
+    def parse_list(terminators)
+      return unless token_type
+      list = parse_group_or_list(terminators)
+      list.type = :list
+      list
+    end
+
     def parse_block(terminators)
       return unless token_type
       tokens.next
@@ -157,7 +159,7 @@ module Fauxy
       block = Statement.new(:block)
 
       list = if token_type == :opening_paren
-        parse_group_or_list(terminators << :block_start)
+        parse_list(terminators << :block_start)
       else
         Statement.new(:list)
       end

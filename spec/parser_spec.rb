@@ -717,5 +717,81 @@ describe Fauxy::Parser do
         expect(block.last.first.type).to be == :literal
       end
     end
+
+    describe 'arguments' do
+      # arr.inject(0) -> (sum, item) { sum.add(item) }
+      let(:tokens) {
+        [
+          Fauxy::Token.new(:id, "arr"),
+          Fauxy::Token.new(:dot_accessor),
+          Fauxy::Token.new(:id, "inject"),
+          Fauxy::Token.new(:opening_paren),
+          Fauxy::Token.new(:number, 0),
+          Fauxy::Token.new(:closing_paren),
+          Fauxy::Token.new(:block_declaration),
+          Fauxy::Token.new(:opening_paren),
+          Fauxy::Token.new(:id, "sum"),
+          Fauxy::Token.new(:comma),
+          Fauxy::Token.new(:id, "item"),
+          Fauxy::Token.new(:closing_paren),
+          Fauxy::Token.new(:block_start),
+          Fauxy::Token.new(:id, "sum"),
+          Fauxy::Token.new(:dot_accessor),
+          Fauxy::Token.new(:id, "add"),
+          Fauxy::Token.new(:opening_paren),
+          Fauxy::Token.new(:id, 'item'),
+          Fauxy::Token.new(:closing_paren),
+          Fauxy::Token.new(:block_end)
+        ]
+      }
+
+      <<-STATEMENTS
+        <Statement: :method_call(
+          <Statement: :lookup( <Token: :id, "arr"> )>,
+          <Statement: :lookup( <Token: :id, "inject"> )>,
+          <Statement: :list(
+            <Statement: :literal( <Token: :number, 0> )>,
+            <Statement: :block(
+              <Statement: :list(
+                <Statement: :lookup( <Token: :id, "sum"> )>,
+                <Statement: :lookup( <Token: :id, "item"> )>
+              )>,
+              <Statement: :statements(
+                <Statement: :method_call(
+                  <Statement: :lookup( <Token: :id, "sum"> )>,
+                  <Statement: :lookup( <Token: :id, "add"> )>,
+                  <Statement: :list(
+                    <Statement: :lookup( <Token: :id, "item"> )>
+                  )>
+                )>
+              )>
+            )>
+          )>
+        )>
+      STATEMENTS
+
+      it "builds a single method call statement" do
+        expect(statements.size).to be == 1
+        expect(statements.first.type).to be == :method_call
+        expect(statements.first.size).to be == 3
+      end
+
+      it "adds the block as the last argument in the list" do
+        list = statements.first.last
+        expect(list.type).to be == :list
+        expect(list.size).to be == 2
+
+        block = list.last
+        expect(block.type).to be == :block
+
+        block_list = block.first
+        expect(block_list.type).to be == :list
+        expect(block_list.size).to be == 2
+
+        statement = block.last.first
+        expect(statement.type).to be == :method_call
+        expect(statement.size).to be == 3
+      end
+    end
   end
 end
