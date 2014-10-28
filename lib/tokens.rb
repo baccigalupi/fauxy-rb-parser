@@ -18,6 +18,11 @@ module Fauxy
       self
     end
 
+    def rollback(n=1)
+      self.cursor -= n
+      current
+    end
+
     def prev
       values[cursor - 1] || Null.new
     end

@@ -27,6 +27,13 @@ module Fauxy
       [:statement_end, :line_end, nil]
     end
 
+    def print_state(msg, statement)
+      puts msg
+      puts "statement: #{statement.inspect}"
+      puts "current: #{token.inspect}"
+      puts "peek: #{peek_type}"
+    end
+
     def conclude_or_chain(terminators, statement)
       tokens.next
       if terminators.include?(token_type)
@@ -134,6 +141,13 @@ module Fauxy
           list_or_group.add(statement)
         end
       end
+
+      # last statement is terminated by the closing_paren
+      # list is also terminated by closing paren
+      # therefore for consistency, we want to roll back
+      # so that peek type is closing_paren
+
+      tokens.rollback if token_type != :closing_paren
 
       conclude_or_chain(terminators, list_or_group)
     end
