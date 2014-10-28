@@ -27,6 +27,20 @@ module Fauxy
       [:statement_end, :line_end, nil]
     end
 
+    def conclude_or_chain(terminators, statement)
+      if terminators.include?(peek_type)
+        # we are done
+        tokens.next
+        statement
+      else
+        # it is the first part of another statement
+        tokens.next
+        statement = parse_statement(terminators, statement)
+        tokens.next
+        statement
+      end
+    end
+
     def parse_statements(terminators=[nil])
       statements = Statement.new(:statements)
       while !terminators.include?(token_type)
@@ -104,15 +118,7 @@ module Fauxy
         method_call.last.add(block) # add to list
       end
 
-      if terminators.include?(peek_type)
-        tokens.next
-        method_call
-      else
-        tokens.next
-        statement = parse_statement(terminators, method_call)
-        tokens.next
-        statement
-      end
+      conclude_or_chain(terminators, method_call)
     end
 
     def parse_group_or_list(terminators)
@@ -135,17 +141,7 @@ module Fauxy
         end
       end
 
-      if terminators.include?(peek_type)
-        # we are done
-        tokens.next
-        list_or_group
-      else
-        # it is the first part of another statement
-        tokens.next
-        statement = parse_statement(terminators, list_or_group)
-        tokens.next
-        statement
-      end
+      conclude_or_chain(terminators, list_or_group)
     end
 
     def parse_list(terminators)
