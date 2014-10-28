@@ -3,6 +3,7 @@ require 'spec_helper'
 describe Fauxy::Parser do
   let(:parser) { Fauxy::Parser.new(tokens) }
   let(:statements) { parser.run.value }
+  let(:statement) { statements.first }
 
   def assert_statement_types(statement, *types)
     expect(
@@ -576,7 +577,7 @@ describe Fauxy::Parser do
       end
     end
 
-    describe 'without arguments, statements separated by ;' do
+    describe 'without arguments, statements separated by \n' do
       # -> {\n"hello"\n"world" }
       let(:tokens) {
         [
@@ -791,6 +792,40 @@ describe Fauxy::Parser do
         statement = block.last.first
         expect(statement.type).to be == :method_call
         expect(statement.size).to be == 3
+      end
+    end
+  end
+
+  xdescribe 'implicit method calls' do
+    describe 'with many arguments' do
+      # -> sum(1,2,3)
+      let(:tokens) {
+        [
+          Fauxy::Token.new(:id, 'sum'),
+          Fauxy::Token.new(:opening_paren),
+          Fauxy::Token.new(:number, 1),
+          Fauxy::Token.new(:comma),
+          Fauxy::Token.new(:number, 2),
+          Fauxy::Token.new(:comma),
+          Fauxy::Token.new(:number, 3),
+          Fauxy::Token.new(:closing_paren),
+        ]
+      }
+
+      it "makes a method call statement" do
+        expect(statement.type).to be == :method_call
+      end
+
+      it "the first token is an :implicit_receiver" do
+        expect(statement.first.type).to be == :implicit_receiver
+      end
+
+      it "second item is the method name" do
+        expect(statement[1].first.value).to be == 'sum'
+      end
+
+      it "ends with a list" do
+        expect(statement.last.type).to be == :list
       end
     end
   end

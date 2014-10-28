@@ -15,11 +15,6 @@ module Fauxy
       self.statements = parse_statements
     end
 
-    def return_statement(statement)
-      tokens.next
-      statement
-    end
-
     def peek_type
       tokens.peek.type
     end
@@ -51,7 +46,9 @@ module Fauxy
       end
 
       if statement
-        return_statement(parse_method_call(terminators, statement))
+        statement = parse_method_call(terminators, statement)
+        tokens.next
+        statement
       elsif token_type == :lookup || token_type == :literal
         if terminators.include?(peek_type)
           statement = token
@@ -108,10 +105,13 @@ module Fauxy
       end
 
       if terminators.include?(peek_type)
-        return_statement(method_call)
+        tokens.next
+        method_call
       else
         tokens.next
-        return_statement(parse_statement(terminators, method_call))
+        statement = parse_statement(terminators, method_call)
+        tokens.next
+        statement
       end
     end
 
@@ -137,11 +137,14 @@ module Fauxy
 
       if terminators.include?(peek_type)
         # we are done
-        return_statement(list_or_group)
+        tokens.next
+        list_or_group
       else
         # it is the first part of another statement
         tokens.next
-        return_statement(parse_statement(terminators, list_or_group))
+        statement = parse_statement(terminators, list_or_group)
+        tokens.next
+        statement
       end
     end
 
