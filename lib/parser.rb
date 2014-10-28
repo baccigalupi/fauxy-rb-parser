@@ -28,13 +28,12 @@ module Fauxy
     end
 
     def conclude_or_chain(terminators, statement)
-      if terminators.include?(peek_type)
+      tokens.next
+      if terminators.include?(token_type)
         # we are done
-        tokens.next
         statement
       else
         # it is the first part of another statement
-        tokens.next
         statement = parse_statement(terminators, statement)
         tokens.next
         statement
@@ -128,20 +127,22 @@ module Fauxy
       tokens.next # to pass the opening paren
 
       while token_type != :closing_paren && token_type != nil
-        if token_type == :comma
-          list_or_group.type = :list
-          tokens.next
-        else
+        unless handle_comma(list_or_group)
           # keep going
           statement = parse_statement([:comma, :closing_paren])
-          if token_type == :comma
-            list_or_group.type == :list
-          end
+          handle_comma(list_or_group)
           list_or_group.add(statement)
         end
       end
 
       conclude_or_chain(terminators, list_or_group)
+    end
+
+    def handle_comma(statement)
+      return unless token_type == :comma
+      statement.type = :list
+      tokens.next
+      true
     end
 
     def parse_list(terminators)
